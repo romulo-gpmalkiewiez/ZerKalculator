@@ -1,12 +1,20 @@
 package br.com.zerksoul.zerkalculator;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
+
+import java.util.logging.Logger;
+
+@RequiresApi(api = Build.VERSION_CODES.N)
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button btnDot;
@@ -32,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextView txtResult;
     private TextView txtExpression;
+
+    private Visor visor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         txtResult = findViewById(R.id.txt_result);
         txtExpression = findViewById(R.id.txt_expression);
+
+        visor = new Visor(this::updateExpressionView);
     }
 
     private void attachButtonListeners() {
@@ -88,45 +100,90 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnMinus.setOnClickListener(this);
         btnMultiply.setOnClickListener(this);
         btnDivide.setOnClickListener(this);
-        btnEqual.setOnClickListener(this);
+
         btnPercent.setOnClickListener(this);
         btnOpenParenthesis.setOnClickListener(this);
         btnCloseParenthesis.setOnClickListener(this);
 
         btnBackspace.setOnClickListener(view -> {
-            String currentText = txtExpression.getText().toString();
-            if (!currentText.isEmpty()) {
-                txtExpression.setText(currentText.substring(0, currentText.length() - 1));
+            visor.eraseLastChar();
+        });
+        btnBackspace.setOnLongClickListener(view -> {
+            visor.clear();
+            return false;
+        });
+
+        btnEqual.setOnClickListener(view -> {
+            String expressionText = visor.getExpression();
+
+            try {
+                Expression expression = new ExpressionBuilder(expressionText).build();
+                Double result = expression.evaluate();
+                boolean isLong = result.longValue() == result.doubleValue();
+
+                String resultTxt = isLong ?
+                        String.valueOf(result.longValue()) :
+                        String.valueOf(result.doubleValue());
+
+                txtResult.setText(resultTxt);
+
+            } catch (Exception ex) {
+                Logger.getLogger(MainActivity.class.getName()).severe(ex.getMessage());
+                txtResult.setText("Error");
             }
         });
-    }
-
-    public void AddExpression(String expression, boolean clearData) {
-
-        if (txtResult.getText().equals("")) {
-            txtExpression.setText("");
-        }
-
-        if (clearData) {
-            txtResult.setText("");
-            txtExpression.append(expression);
-        } else {
-            txtExpression.append(txtResult.getText());
-            txtExpression.append(expression);
-            txtResult.setText("");
-        }
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.btn_plus:
+                visor.addSum();
+                break;
+            case R.id.btn_minus:
+                visor.addSubtraction();
+                break;
+            case R.id.btn_times:
+                visor.addMultiplication();
+                break;
+            case R.id.btn_divide:
+                visor.addDivision();
+                break;
+            case R.id.btn_percent:
+                visor.addPercent();
+                break;
+            case R.id.btn_open_parenthesis:
+                visor.addOpenParenthesis();
+                break;
+            case R.id.btn_close_parenthesis:
+                visor.addCloseParenthesis();
+                break;
+            case R.id.btn_dot:
+                visor.addDot();
+                break;
             default:
-                Object clickedComponent = findViewById(view.getId());
-                if (clickedComponent instanceof Button) {
-                    String buttonText = ((Button) clickedComponent).getText().toString();
-                    AddExpression(buttonText, false);
-                }
+                visor.addNumber(getButtonText(view));
                 break;
         }
+    }
+
+    private void updateExpressionView(String value) {
+        String newExpression = value
+                .replace("+", btnPlus.getText())
+                .replace("-", btnMinus.getText())
+                .replace("*", btnMultiply.getText())
+                .replace("/", btnDivide.getText());
+
+        txtExpression.setText(newExpression);
+    }
+
+    private String getButtonText(View view) {
+        Object component = findViewById(view.getId());
+
+        if (component instanceof Button) {
+            return ((Button) component).getText().toString();
+        }
+
+        return null;
     }
 }
