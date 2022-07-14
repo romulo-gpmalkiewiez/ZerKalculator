@@ -43,7 +43,9 @@ public class Visor {
 
     public void eraseLastChar() {
         String currentText = getExpression();
-        setExpression(currentText.substring(0, currentText.length() - 1));
+        if (!currentText.isEmpty()) {
+            setExpression(currentText.substring(0, currentText.length() - 1));
+        }
     }
 
     public void clear() {
@@ -76,7 +78,16 @@ public class Visor {
     }
 
     private void addExpression(String expression) {
-        setExpression(this.expression + expression);
+        setExpression(sanitize(this.expression + expression));
+    }
+
+    private String sanitize(String expression) {
+        return expression
+                .replaceAll("\\++", "+")
+                .replaceAll("\\-+", "-")
+                .replaceAll("\\*+", "-")
+                .replaceAll("\\/+", "/")
+                .replaceAll("\\.+", ".");
     }
 
 }
