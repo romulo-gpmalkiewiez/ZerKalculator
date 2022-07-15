@@ -12,7 +12,16 @@ import android.widget.TextView;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -101,7 +110,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnMultiply.setOnClickListener(this);
         btnDivide.setOnClickListener(this);
 
-        btnPercent.setOnClickListener(this);
+        btnPercent.setOnClickListener(event -> {
+            try {
+                String expression = visor.getExpression();
+                EvaluatedValue evaluatedValue = new Evaluator().evaluatePercent(expression);
+
+                updateResultView(evaluatedValue.getResult());
+                visor.setExpression(evaluatedValue.getExpression());
+            } catch (Exception ex) {
+                handleEvaluationException(ex);
+            }
+        });
         btnOpenParenthesis.setOnClickListener(this);
         btnCloseParenthesis.setOnClickListener(this);
 
@@ -114,24 +133,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         btnEqual.setOnClickListener(view -> {
-            String expressionText = visor.getExpression();
-
             try {
-                Expression expression = new ExpressionBuilder(expressionText).build();
-                Double result = expression.evaluate();
-                boolean isLong = result.longValue() == result.doubleValue();
+                String expression = visor.getExpression();
+                String expressionResult = new Evaluator().evaluate(expression);
 
-                String resultTxt = isLong ?
-                        String.valueOf(result.longValue()) :
-                        String.valueOf(result.doubleValue());
-
-                txtResult.setText(resultTxt);
-
+                updateResultView(expressionResult);
             } catch (Exception ex) {
-                Logger.getLogger(MainActivity.class.getName()).severe(ex.getMessage());
-                txtResult.setText("Error");
+                handleEvaluationException(ex);
             }
         });
+    }
+
+    private void handleEvaluationException(Exception ex) {
+        Logger.getLogger(MainActivity.class.getName()).severe(ex.getMessage());
+        txtResult.setText("Error");
+        txtExpression.setText("Invalid expression");
     }
 
     @Override
@@ -175,6 +191,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .replace("/", btnDivide.getText());
 
         txtExpression.setText(newExpression);
+    }
+
+    private void updateResultView(String value) {
+        BigDecimal bigDecimal = new BigDecimal(value)
+                .setScale(2, RoundingMode.HALF_UP)
+                .stripTrailingZeros();
+
+        txtResult.setText(bigDecimal.toPlainString());
     }
 
     private String getButtonText(View view) {
