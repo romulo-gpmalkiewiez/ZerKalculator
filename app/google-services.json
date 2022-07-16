@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "399136515656",
+    "project_id": "zerkcalculator",
+    "storage_bucket": "zerkcalculator.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399136515656:android:48cb936480331a20459a7d",
+        "android_client_info": {
+          "package_name": "br.com.zerksoul.zerkalculator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "399136515656-47tpjpsi6aqtm9ru1mqeroqckg8etv92.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "br.com.zerksoul.zerkalculator",
+            "certificate_hash": "8868986114132e2b793db082ead651ba2254de90"
+          }
+        },
+        {
+          "client_id": "399136515656-o0gu9cl1fpnioi4loa2uavqbgcfoq20f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUO1NNxZ1A5G4QQT5-oDLPI8XJyxHSlDA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399136515656-o0gu9cl1fpnioi4loa2uavqbgcfoq20f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
