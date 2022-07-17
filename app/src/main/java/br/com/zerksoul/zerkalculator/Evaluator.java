@@ -25,39 +25,39 @@ public class Evaluator {
         String percentNum = numbers.get(numbers.size() - 1);
         int percentNumIndex = expressionValue.lastIndexOf(percentNum);
 
-        String restExpression = expressionValue.substring(0, percentNumIndex);
-        String lastOperation = String.valueOf(restExpression.charAt(restExpression.length() - 1));
-        restExpression = restExpression.substring(0, restExpression.lastIndexOf(lastOperation));
+        String restExpression = expressionValue.substring(0, percentNumIndex); // 10*
+        String lastOperation = String.valueOf(restExpression.charAt(restExpression.length() - 1)); // *
+        restExpression = restExpression.substring(0, restExpression.lastIndexOf(lastOperation)); // 10
 
-        Double restExpressionResult = new ExpressionBuilder(restExpression).build().evaluate();
+        Double restExpressionResult = new ExpressionBuilder(restExpression).build().evaluate(); // 10
+        // 10+20% -> 10+2
+        // 10*20% -> 10*0.2
+        double calculatedPercent = new ExpressionBuilder(
+                getFinalPercentResultExpression(restExpressionResult, lastOperation, percentNum))
+                .build()
+                .evaluate();
 
-        String percentOnlyExpression = createPercentOnlyExpression(restExpressionResult, percentNum);
-        Double percentOnlyResult = new ExpressionBuilder(percentOnlyExpression).build().evaluate();
+        String newExpression = restExpressionResult + lastOperation + calculatedPercent;
+        double newResult = new ExpressionBuilder(newExpression).build().evaluate();
 
-        String resultExpression = createFullPercentResultExpression(restExpressionResult, lastOperation, percentNum);
-        Double result = new ExpressionBuilder(resultExpression).build().evaluate();
-
-        String newExpression = restExpression + lastOperation + toReadableValue(percentOnlyResult);
-        String resultResult = toReadableValue(result);
-
-        return new EvaluatedValue(newExpression, resultResult);
+        return new EvaluatedValue(newExpression, toReadableValue(newResult));
     }
 
-    private String createFullPercentResultExpression(Double initialExpressionValue, String operator, String percent) {
-        return String.format("%f %s (%f * %s / 100)", initialExpressionValue, operator, initialExpressionValue, percent);
+    private String getFinalPercentResultExpression(Double value, String operator, String percent) {
+        String percentExpression = percent + "/ 100";
+
+        return (operator.equals("+") || operator.equals("-")) ?
+                value + "*" + percentExpression :
+                percentExpression;
     }
 
     private String createPercentOnlyExpression(Double value, String percent) {
-        return String.format("%f * %s / 100", value, percent);
+        return "(" + value + "*" + percent + "/100)";
     }
 
     private List<String> getExpressionNumbers(String expression) {
         Matcher matcher = NUMBERS_REGEX_PATTERN.matcher(expression);
         List<String> numbers = new ArrayList<>();
-
-//        for (boolean found = matcher.find(); found;) {
-//            numbers.add(matcher.group());
-//        }
 
         while (matcher.find()) {
             numbers.add(matcher.group());

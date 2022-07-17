@@ -17,6 +17,10 @@ public class Visor {
     private String expression = "";
     private Consumer<String> updateCallback;
 
+    public Visor() {
+
+    }
+
     public Visor(Consumer<String> updateExpressionCallback) {
         this.updateCallback = updateExpressionCallback;
     }
@@ -69,7 +73,7 @@ public class Visor {
 
     public void setExpression(String expression) {
         this.expression = expression;
-        this.updateCallback.accept(getExpression());
+        executeUpdateCallbackIfPresent();
     }
 
     public void addPercent() {
@@ -94,6 +98,12 @@ public class Visor {
 
     private void addExpression(String expression) {
         setExpression(sanitize(this.expression + expression));
+    }
+
+    private void executeUpdateCallbackIfPresent() {
+        if (this.updateCallback != null) {
+            this.updateCallback.accept(getExpression());
+        }
     }
 
     private String sanitize(String expression) {
