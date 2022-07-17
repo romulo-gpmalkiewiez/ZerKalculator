@@ -23,4 +23,5 @@
 
     <color name="btn_equal_text_color">@color/bg_color</color>
     <color name="btn_equal_bg_color">#FF922E</color>
+    <color name="borda_recycleView">#7CDFE1D6</color>
 </resources>
