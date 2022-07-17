@@ -1,31 +1,39 @@
 package br.com.zerksoul.zerkalculator;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.ktx.Firebase;
 
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private DatabaseReference databaseReferencia = FirebaseDatabase.getInstance().getReference();
     private Button btnDot;
     private Button btnNum0;
     private Button btnNum1;
@@ -57,10 +65,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSupportActionBar().hide();
+        //getSupportActionBar().hide();
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(0xFF4E71AE));
 
         initializeComponents();
         attachButtonListeners();
+
+        databaseReferencia.child("historico").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.i("FIREBASE", snapshot.getValue().toString());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.i("FIREBASE", "erro relacionado ao banco de dados" + error);
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_principal, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.itemHistorico) {
+            Intent historicoIntent = new Intent(this, HistoricoActivity.class);
+            startActivity(historicoIntent);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void initializeComponents() {
@@ -129,15 +165,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         btnBackspace.setOnLongClickListener(view -> {
             visor.clear();
+            updateResultView("");
             return false;
         });
 
         btnEqual.setOnClickListener(view -> {
+            String expressionText = visor.getExpression();
+            if (expressionText.isEmpty()) {
+                return;
+            }
             try {
-                String expression = visor.getExpression();
-                String expressionResult = new Evaluator().evaluate(expression);
+                String expressionResult = new Evaluator().evaluate(expressionText);
+
+                if (expressionResult.length() > 8) { /* caso resultado for muito grande, ou uma dizina periodica, ele pega os primeiros digitos */
+                    expressionResult = expressionResult.substring(0, 9);
+                }
 
                 updateResultView(expressionResult);
+
+                //abaixo faz a inserção no banco de dados
+                if (visor.getOperator() != null) {
+                    int indexOperator = expressionText.indexOf(visor.getOperator());
+                    String valor1 = expressionText.substring(0, indexOperator);
+                    String valor2 = expressionText.substring(indexOperator + 1);
+                    Conta conta = new Conta(valor1, valor2, visor.getOperator(), expressionResult);
+                    databaseReferencia.child("historico").push().setValue(conta);
+                } else {
+                    Conta conta = new Conta(expressionResult, null, null, expressionResult);
+                    databaseReferencia.child("historico").push().setValue(conta);
+                }
             } catch (Exception ex) {
                 handleEvaluationException(ex);
             }
@@ -194,11 +250,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void updateResultView(String value) {
-        BigDecimal bigDecimal = new BigDecimal(value)
-                .setScale(2, RoundingMode.HALF_UP)
-                .stripTrailingZeros();
+        String resultTxt = value;
 
-        txtResult.setText(bigDecimal.toPlainString());
+        if (!resultTxt.isEmpty()) {
+            resultTxt = new BigDecimal(value)
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .stripTrailingZeros()
+                    .toPlainString();
+        }
+
+        txtResult.setText(resultTxt);
     }
 
     private String getButtonText(View view) {

@@ -43,9 +43,24 @@ public class Visor {
 
     public void eraseLastChar() {
         String currentText = getExpression();
-        if (!currentText.isEmpty()) {
+        if (!currentText.isEmpty())
             setExpression(currentText.substring(0, currentText.length() - 1));
+    }
+
+    public String getOperator() {
+        if (getExpression().contains(SUBTRACTION_SYMBOL)) {
+            return SUBTRACTION_SYMBOL;
         }
+        if (getExpression().contains(DIVISION_SYMBOL)) {
+            return DIVISION_SYMBOL;
+        }
+        if (getExpression().contains(ADDITION_SYMBOL)) {
+            return ADDITION_SYMBOL;
+        }
+        if (getExpression().contains(MULTIPLICATION_SYMBOL)) {
+            return MULTIPLICATION_SYMBOL;
+        }
+        return null;
     }
 
     public void clear() {
@@ -85,7 +100,7 @@ public class Visor {
         return expression
                 .replaceAll("\\++", "+")
                 .replaceAll("\\-+", "-")
-                .replaceAll("\\*+", "-")
+                .replaceAll("\\*+", "*")
                 .replaceAll("\\/+", "/")
                 .replaceAll("\\.+", ".");
     }
