@@ -13,6 +13,7 @@ public class Visor {
     private static final String SUBTRACTION_SYMBOL = "-";
     private static final String MULTIPLICATION_SYMBOL = "*";
     private static final String DIVISION_SYMBOL = "/";
+    private boolean isCalculatingActive = false;
 
     private String expression = "";
     private Consumer<String> updateCallback;
@@ -22,19 +23,34 @@ public class Visor {
     }
 
     public void addSum() {
-        addExpression(ADDITION_SYMBOL);
+        if(!isCalculatingActive){
+            addExpression(ADDITION_SYMBOL);
+            isCalculatingActive = true;
+        }
+
     }
 
     public void addSubtraction() {
-        addExpression(SUBTRACTION_SYMBOL);
+        if(!isCalculatingActive){
+            addExpression(SUBTRACTION_SYMBOL);
+            isCalculatingActive = true;
+        }
+
     }
 
     public void addMultiplication() {
-        addExpression(MULTIPLICATION_SYMBOL);
+        if(!isCalculatingActive){
+            addExpression(MULTIPLICATION_SYMBOL);
+            isCalculatingActive = true;
+        }
+     ;
     }
 
     public void addDivision() {
-        addExpression(DIVISION_SYMBOL);
+        if(!isCalculatingActive){
+            addExpression(DIVISION_SYMBOL);
+            isCalculatingActive = true;
+        }
     }
 
     public String getExpression() {
@@ -43,13 +59,34 @@ public class Visor {
 
     public void eraseLastChar() {
         String currentText = getExpression();
-        if (!currentText.isEmpty()) {
-            setExpression(currentText.substring(0, currentText.length() - 1));
+        if(getOperator() == null){
+            if(currentText.length() > 0)
+                setExpression(currentText.substring(0, currentText.length() - 1));
         }
+        else{
+            isCalculatingActive = false;
+        }
+
     }
+        public String getOperator(){
+         if(getExpression().contains(SUBTRACTION_SYMBOL)){
+             return SUBTRACTION_SYMBOL;
+         }
+         if(getExpression().contains(DIVISION_SYMBOL)){
+             return DIVISION_SYMBOL;
+         }
+         if(getExpression().contains(ADDITION_SYMBOL)){
+             return ADDITION_SYMBOL;
+         }
+         if(getExpression().contains(MULTIPLICATION_SYMBOL)){
+             return MULTIPLICATION_SYMBOL;
+         }
+         return null;
+        }
 
     public void clear() {
         setExpression("");
+        isCalculatingActive = false;
     }
 
     public void setExpression(String expression) {
