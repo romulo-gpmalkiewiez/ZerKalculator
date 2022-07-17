@@ -79,20 +79,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.i("FIREBASE","erro relacionado ao banco de dados" + error);
+                Log.i("FIREBASE", "erro relacionado ao banco de dados" + error);
             }
         });
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_principal, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item){
-        if(item.getItemId() == R.id.itemHistorico){
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.itemHistorico) {
             Intent historicoIntent = new Intent(this, HistoricoActivity.class);
             startActivity(historicoIntent);
         }
@@ -165,33 +165,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         btnBackspace.setOnLongClickListener(view -> {
             visor.clear();
+            updateResultView("");
             return false;
         });
 
         btnEqual.setOnClickListener(view -> {
+            String expressionText = visor.getExpression();
+            if (expressionText.isEmpty()) {
+                return;
+            }
             try {
-                String expressionText = visor.getExpression();
                 String expressionResult = new Evaluator().evaluate(expressionText);
 
-                String resultTxt = updateResultView(expressionResult);
+                if (expressionResult.length() > 8) { /* caso resultado for muito grande, ou uma dizina periodica, ele pega os primeiros digitos */
+                    expressionResult = expressionResult.substring(0, 9);
+                }
 
-                if (resultTxt.length() > 8) /*caso resultado for muito grande, ou uma dizina periodica,
-                                            ele pega os primeiros digitos */
-                    resultTxt = resultTxt.substring(0,9);
-                txtResult.setText(resultTxt);
+                updateResultView(expressionResult);
 
                 //abaixo faz a inserção no banco de dados
-                if(visor.getOperator() != null){
+                if (visor.getOperator() != null) {
                     int indexOperator = expressionText.indexOf(visor.getOperator());
                     String valor1 = expressionText.substring(0, indexOperator);
-                    String valor2 = expressionText.substring(indexOperator+1,expressionText.length());
-                    Conta conta = new Conta(valor1,valor2,visor.getOperator(),resultTxt);
+                    String valor2 = expressionText.substring(indexOperator + 1);
+                    Conta conta = new Conta(valor1, valor2, visor.getOperator(), expressionResult);
                     databaseReferencia.child("historico").push().setValue(conta);
-                }else{
-                    Conta conta = new Conta(resultTxt,null,null,resultTxt);
+                } else {
+                    Conta conta = new Conta(expressionResult, null, null, expressionResult);
                     databaseReferencia.child("historico").push().setValue(conta);
                 }
-                visor.clear();
             } catch (Exception ex) {
                 handleEvaluationException(ex);
             }
@@ -247,14 +249,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtExpression.setText(newExpression);
     }
 
-    private String updateResultView(String value) {
-        String resultTxt = new BigDecimal(value)
-                .setScale(2, RoundingMode.HALF_UP)
-                .stripTrailingZeros()
-                .toPlainString();
+    private void updateResultView(String value) {
+        String resultTxt = value;
+
+        if (!resultTxt.isEmpty()) {
+            resultTxt = new BigDecimal(value)
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .stripTrailingZeros()
+                    .toPlainString();
+        }
 
         txtResult.setText(resultTxt);
-        return resultTxt;
     }
 
     private String getButtonText(View view) {
